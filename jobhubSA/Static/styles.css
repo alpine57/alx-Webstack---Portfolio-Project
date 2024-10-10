@@ -1,0 +1,27 @@
+
+dy {
+    font-family: Arial, sans-serif;
+}
+
+h1 {
+    color: #333;
+}
+
+a {
+    color: blue;
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+form {
+    margin-top: 20px;
+}
+
+input, textarea {
+    width: 100%;
+    padding: 10px;
+    margin: 10px 0;
+}
