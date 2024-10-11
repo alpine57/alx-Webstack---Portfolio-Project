@@ -1,0 +1,11 @@
+<!-- mentors.html -->
+<ul>
+    {% for mentor in mentors %}
+    <li>
+        <strong>{{ mentor.username }}</strong><br>
+        {{ mentor.mentor_bio }}<br>
+        <a href="mailto:{{ mentor.email }}">Request Mentorship</a>
+    </li>
+    {% endfor %}
+</ul>
+

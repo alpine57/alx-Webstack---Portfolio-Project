@@ -1,15 +1,13 @@
-
 #!/usr/bin/env python3
-from decimal import Decimal
 
+from decimal import Decimal
 import mongoengine as me
 from datetime import datetime
 
-
 # Connect to the MongoDB instance
-me.connect('jobhub_database', host='localhost', port=27017)
+me.connect('jobhub_database', host='mongodb+srv://itumelengmalau:Itumeleng1@cluster0.ivz3n.mongodb.net')
 
-#creating a job post model
+# Creating a JobPost model
 class JobPost(me.Document):
     title = me.StringField(required=True, max_length=200)
     company = me.StringField(required=True, max_length=100)
@@ -18,40 +16,36 @@ class JobPost(me.Document):
     posted_date = me.DateTimeField(default=datetime.utcnow)
     salary = me.DecimalField(min_value=0)
 
-    def _str_(self):
+    def __str__(self):
         return f'{self.title} at {self.company}'
 
-#creating a Users model
-
+# Creating a User model
 class User(me.Document):
     username = me.StringField(required=True, unique=True)
     email = me.EmailField(required=True, unique=True)
     password = me.StringField(required=True)
     is_admin = me.BooleanField(default=False)
 
-    def _str_(self):
+    def __str__(self):
         return self.username
 
-#create and save jobPost document to mongodb
-
+# Create and save a JobPost document to MongoDB
 job = JobPost(
-    title="JuniorSoftware Engineer",
-    company="Tech Innovators",
+    title="Junior Software Engineer",
+    company="Tech Hub",
     location="Johannesburg",
     description="Develop and maintain software solutions.",
     salary=Decimal('7500.00')
-
 )
 
 # Save it to MongoDB
 job.save()
 
-#creating a user document and saving it to mongodb
-
+# Create and save a User document to MongoDB
 user = User(
-        username="Itumeleng Malau",
-        email="itumeleng@gmail.com",
-        password="flyaway",
-        is_admin=True
+    username="Itumeleng Mulaudzi",
+    email="itumeleng1@gmail.com",
+    password="flyaway",
+    is_admin=True
 )
 user.save()

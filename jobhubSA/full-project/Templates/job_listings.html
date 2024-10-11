@@ -1,0 +1,22 @@
+<!-- job_listings.html -->
+<form action="/jobs" method="get">
+    <input type="text" name="location" placeholder="Filter by location">
+    <input type="text" name="category" placeholder="Filter by category">
+    <button type="submit">Search</button>
+</form>
+
+<ul>
+    {% for job in jobs %}
+    <li>
+        <strong>{{ job.title }}</strong> - {{ job.company }}<br>
+        Location: {{ job.location }} | Salary: {{ job.salary }}<br>
+        {{ job.description }}<br>
+        <a href="/apply/{{ job.id }}">Apply</a>
+    </li>
+    {% endfor %}
+</ul>
+
+#apply button
+<form action="/apply/{{ job.id }}" method="post">
+    <button type="submit">Apply</button>
+</form>
