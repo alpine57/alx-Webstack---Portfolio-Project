@@ -1,21 +1,17 @@
 #!/usr/bin/python3
 
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template, redirect, url_for
+from flask_pymongo import PyMongo
 import bcrypt
 import jwt
-import os
-import psycopg2
 from functools import wraps
 from datetime import datetime, timedelta
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'your_secret_key'
+app.config['SECRET_KEY'] = "a90ef4c3c5f40457616af79fd12283cd"
+app.config['MONGO_URI'] = "mongodb://localhost:27017/jobhubSA"
 
-DATABASE_URL = os.getenv('DATABASE_URL', 'psql "postgres://default:zyqGFZc0HWt2@ep-still-band-a4xu3rci.us-east-1.aws.neon.tech:5432/verceldb?sslmode=require"')
-
-def get_db_connection():
-    conn = psycopg2.connect(DATABASE_URL)
-    return conn
+mongo = PyMongo(app)
 
 def token_required(f):
     @wraps(f)
@@ -33,57 +29,65 @@ def token_required(f):
         return f(current_user, *args, **kwargs)
     return decorated
 
-@app.route('/register', methods=['POST'])
+@app.route('/')
+def home():
+    return render_template('login.html')
+
+@app.route('/login_signup', methods=['GET', 'POST'])
 def register():
-    data = request.get_json()
-    username = data['username']
-    email = data['email']
-    password = data['password']
+    if request.method == 'POST':
+        data = request.form
+        username = data['username']
+        email = data['email']
+        password = data['password']
 
-    conn = get_db_connection()
-    cur = conn.cursor()
-    cur.execute("SELECT * FROM users WHERE username = %s", (username,))
-    user = cur.fetchone()
+        # Check if the user already exists in the MongoDB collection
+        user = mongo.db.users.find_one({"username": username})
+        if user:
+            return jsonify({'message': 'Username already exists!'}), 400
 
-    if user:
-        return jsonify({'message': 'Username already exists!'}), 400
+        # Hash the password and insert the new user
+        hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+        mongo.db.users.insert_one({
+            'username': username,
+            'email': email,
+            'password': hashed_password
+        })
 
-    hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
-    cur.execute("INSERT INTO users (username, email, password) VALUES (%s, %s, %s)",
-                (username, email, hashed_password))
-    conn.commit()
-    cur.close()
-    conn.close()
+        return redirect(url_for('home'))
 
-    return jsonify({'message': 'User registered successfully!'}), 201
+    return render_template('register.html')
 
-@app.route('/login', methods=['POST'])
+@app.route('/login_signup', methods=['GET', 'POST'])
 def login():
-    data = request.get_json()
-    username = data['username']
-    password = data['password']
+    if request.method == 'POST':
+        data = request.form
+        username = data['username']
+        password = data['password']
 
-    conn = get_db_connection()
-    cur = conn.cursor()
-    cur.execute("SELECT * FROM users WHERE username = %s", (username,))
-    user = cur.fetchone()
-    cur.close()
-    conn.close()
+        # Find the user in the MongoDB collection
+        user = mongo.db.users.find_one({"username": username})
+        if not user or not bcrypt.checkpw(password.encode('utf-8'), user['password'].encode('utf-8')):
+            return jsonify({'message': 'Invalid credentials!'}), 401
 
-    if not user or not bcrypt.checkpw(password.encode('utf-8'), user[3].encode('utf-8')):
-        return jsonify({'message': 'Invalid credentials!'}), 401
+        # Create the JWT token
+        token = jwt.encode({
+            'username': user['username'],
+            'exp': datetime.utcnow() + timedelta(hours=1)
+        }, app.config['SECRET_KEY'], algorithm="HS256")
 
-    token = jwt.encode({
-        'username': user[1],
-        'exp': datetime.utcnow() + timedelta(hours=1)
-    }, app.config['SECRET_KEY'], algorithm="HS256")
+        return redirect(url_for('dashboard', token=token))
 
-    return jsonify({'token': token})
+    return render_template('login_signup.html')
 
-@app.route('/protected', methods=['GET'])
+@app.route('/dashboard')
 @token_required
-def protected_route(current_user):
-    return jsonify({'message': f'Hello, {current_user}!', 'logged_in_as': current_user})
+def dashboard(current_user):
+    return render_template('dashboard.html', current_user=current_user)
+
+@app.route('/logout')
+def logout():
+    return redirect(url_for('home'))
 
 @app.route('/users', methods=['GET'])
 @token_required
@@ -91,15 +95,11 @@ def get_users(current_user):
     if current_user != 'admin':
         return jsonify({'message': 'Admin access required!'}), 403
     
-    conn = get_db_connection()
-    cur = conn.cursor()
-    cur.execute("SELECT id, username, email FROM users")
-    users = cur.fetchall()
-    cur.close()
-    conn.close()
-    
-    users_list = [{'id': user[0], 'username': user[1], 'email': user[2]} for user in users]
+    # Fetch all users from the MongoDB collection
+    users = mongo.db.users.find({}, {"_id": 0, "username": 1, "email": 1})
+    users_list = [{'username': user['username'], 'email': user['email']} for user in users]
     return jsonify(users_list), 200
 
 if __name__ == '__main__':
     app.run(debug=True)
+
