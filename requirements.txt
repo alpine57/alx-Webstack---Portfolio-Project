@@ -2,7 +2,6 @@ certifi==2019.11.28
 chardet==3.0.4
 dbus-python==1.2.16
 distro==1.4.0
-distro-info===0.23ubuntu1
 greenlet==1.1.2
 idna==2.8
 mysqlclient==2.1.0
