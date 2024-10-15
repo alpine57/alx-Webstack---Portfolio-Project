@@ -18,7 +18,7 @@ pycodestyle==2.8.0
 Pygments==2.3.1
 PyGObject==3.36.0
 pyparsing>=3.0.0
-python-3.9.16
+python==3.9.5
 PyYAML==5.3.1
 requests==2.22.0
 requests-unixsocket==0.2.0
