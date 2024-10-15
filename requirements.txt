@@ -18,7 +18,7 @@ pycodestyle==2.8.0
 Pygments==2.3.1
 PyGObject==3.36.0
 pyparsing==2.4.6
-python-apt==2.0.0+ubuntu0.20.4.7
+python-3.9.16
 PyYAML==5.3.1
 requests==2.22.0
 requests-unixsocket==0.2.0
