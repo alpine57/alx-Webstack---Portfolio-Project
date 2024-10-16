@@ -23,6 +23,5 @@ requests==2.22.0
 requests-unixsocket==0.2.0
 six==1.14.0
 SQLAlchemy==1.4.32
-ssh-import-id==5.10
-unattended-upgrades==0.1
+ssh-import-id==5.0
 urllib3==1.25.8
